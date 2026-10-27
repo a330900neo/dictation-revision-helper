@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DSE 宋詞三首 · 背默複習</title>
+    <style>
+        :root {
+            --bg: #121216;
+            --panel: #1c1c24;
+            --text: #e8e8f0;
+            --text2: #6a6a7a;
+            --accent: #7c6cf0;
+            --danger: #e05a6a;
+            --danger-bg: rgba(224, 90, 106, 0.2);
+            --warn: #e0a84a;
+            --warn-bg: rgba(224, 168, 74, 0.15);
+            --border: rgba(255,255,255,0.08);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, "PingFang HK", "Noto Sans TC", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 頂部控制區 */
+        header {
+            padding: 10px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        select {
+            background: #2a2a35;
+            color: #fff;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+        }
+        .toggle-group {
+            display: flex;
+            background: #2a2a35;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .toggle-group button {
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .toggle-group button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn {
+            background: #2a2a35;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* 目前背默標題列 */
+        .current-poem-bar {
+            background: var(--panel);
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .current-poem-bar span {
+            color: var(--text2);
+            font-weight: 400;
+            font-size: 12px;
+        }
+
+        /* 統計面板 */
+        .stats-panel {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            flex-shrink: 0;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .stats-panel.show { display: flex; }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 10px;
+        }
+        .stat-card h4 { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 400; }
+        .stat-card .val { font-size: 20px; font-weight: 700; color: var(--accent); }
+        .stat-card .val.danger { color: var(--danger); }
+        .stat-card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+        /* 圖表容器 */
+        .chart-container {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 10px;
+        }
+        .chart-container h4 { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 80px;
+            gap: 6px;
+            padding-top: 10px;
+        }
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+        }
+        .bar {
+            width: 100%;
+            background: var(--accent);
+            border-radius: 3px 3px 0 0;
+            min-height: 2px;
+            transition: height 0.3s;
+            position: relative;
+        }
+        .bar-label { font-size: 9px; color: var(--text2); white-space: nowrap; }
+        .bar-val {
+            font-size: 9px; color: var(--text);
+            position: absolute; top: -14px; left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 進度條 */
+        .progress-container {
+            height: 3px;
+            background: #2a2a35;
+            width: 100%;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+
+        /* 主要顯示區 */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px 40px;
+            scroll-behavior: smooth;
+        }
+        .text-container {
+            font-size: 24px;
+            line-height: 1.9;
+            letter-spacing: 1px;
+            text-align: justify;
+            word-break: break-word;
+        }
+        .para-spacer { display: block; height: 16px; width: 100%; }
+        
+        /* 內文嘅詞牌標題 */
+        .inline-poem-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 24px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .inline-poem-title:first-child { margin-top: 0; }
+        .inline-poem-title span {
+            font-size: 12px;
+            color: var(--text2);
+            font-weight: 400;
+            margin-left: 8px;
+        }
+
+        .char {
+            display: inline;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 3px;
+            padding: 0 2px;
+            margin: 0 -1px;
+        }
+        .char.flagged {
+            color: var(--danger);
+            background: var(--danger-bg);
+            border-bottom: 2px solid var(--danger);
+            font-weight: 600;
+        }
+        .char.dimmed { color: var(--text2); opacity: 0.6; }
+        
+        .target-marker {
+            display: inline-block;
+            width: 18px;
+            height: 28px;
+            vertical-align: bottom;
+            border-bottom: 2px solid var(--accent);
+            animation: blink 1s infinite;
+            margin: 0 2px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.15; }
+        }
+
+        .sent {
+            display: inline;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 2px 0;
+            transition: all 0.2s;
+        }
+        .sent.flagged {
+            color: var(--warn);
+            background: var(--warn-bg);
+            border-bottom: 2px solid var(--warn);
+            font-weight: 600;
+        }
+        .sent.dimmed { color: var(--text2); opacity: 0.6; }
+
+        /* 底部操作區 */
+        footer {
+            padding: 10px 12px calc(10px + var(--safe-bottom));
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr 1.2fr 1fr;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .footer-btn {
+            padding: 12px 2px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .footer-btn:active { transform: scale(0.96); }
+        .footer-btn:disabled { opacity: 0.3; }
+        .btn-prev { background: #2a2a35; color: var(--text2); font-size: 12px; }
+        .btn-next { background: var(--accent); color: #fff; }
+        .btn-forgot { background: var(--danger); color: #fff; }
+        .btn-lastwrong { background: #3a2a3a; color: #e08ae0; border: 1px solid #5a4a5a; font-size: 11px;}
+        .btn-reset { background: #2a2a35; color: var(--text); font-size: 11px; }
+        
+        @media (min-width: 600px) {
+            body { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="row">
+        <select id="poemSelect">
+            <option value="all">全部三首</option>
+            <option value="qing">青玉案 · 元夕</option>
+            <option value="nian">念奴嬌 · 赤壁懷古</option>
+            <option value="sheng">聲聲慢 · 秋情</option>
+        </select>
+        <select id="paraSelect">
+            <option value="0">全篇</option>
+            <option value="1">上片</option>
+            <option value="2">下片</option>
+        </select>
+        <button class="btn" id="shuffleBtn" title="錯題優先">🔀 錯題優先</button>
+        <button class="btn" id="statsBtn" style="margin-left:auto;">📊 數據</button>
+    </div>
+    <div class="row" style="justify-content: space-between;">
+        <div class="toggle-group">
+            <button id="modeChar" class="active">逐字</button>
+            <button id="modeSent">逐句</button>
+        </div>
+        <div class="toggle-group">
+            <button id="viewNormal" class="active">全部內容</button>
+            <button id="viewReview">只溫錯題</button>
+        </div>
+    </div>
+</header>
+
+<!-- 實時顯示目前正在背嘅詞 -->
+<div class="current-poem-bar" id="currentPoemBar">
+    📖 目前背默：<span id="currentPoemName">準備開始</span>
+</div>
+
+<!-- 統計數據面板 -->
+<div class="stats-panel" id="statsPanel">
+    <div class="stat-grid">
+        <div class="stat-card">
+            <h4>總體忘記率</h4>
+            <div class="val danger" id="statForgotPct">0%</div>
+            <div class="sub" id="statForgotSub">0 / 0 字</div>
+        </div>
+        <div class="stat-card">
+            <h4>本輪已用時間</h4>
+            <div class="val" id="statTime">00:00</div>
+            <div class="sub" id="statSpeed">0 字/分鐘</div>
+        </div>
+    </div>
+    <div class="chart-container">
+        <h4>歷史學習速度 (字/分鐘)</h4>
+        <div class="chart-bars" id="historyChart"></div>
+    </div>
+</div>
+
+<div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<main id="scrollArea">
+    <div class="text-container" id="textContainer"></div>
+</main>
+
+<footer>
+    <button class="footer-btn btn-reset" id="resetBtn">下一輪<br>重設</button>
+    <button class="footer-btn btn-prev" id="prevBtn">◀ 退<br>一步</button>
+    <button class="footer-btn btn-next" id="nextBtn">下一句<br>▶</button>
+    <button class="footer-btn btn-lastwrong" id="lastWrongBtn">上個<br>錯咗</button>
+    <button class="footer-btn btn-forgot" id="forgotBtn">唔記得<br>顯示</button>
+</footer>
+
+<script>
+// ============================================================
+// 1. 數據 (DSE 指定用字)
+// ============================================================
+const POEMS = {
+    qing: {
+        title: "青玉案 · 元夕", author: "辛棄疾",
+        paragraphs: [
+            "東風夜放花千樹。更吹落、星如雨。寶馬雕車香滿路。鳳簫聲動，玉壺光轉，一夜魚龍舞。",
+            "蛾兒雪柳黃金縷。笑語盈盈暗香去。眾裏尋他千百度。驀然迴首，那人卻在、燈火闌珊處。"
+        ]
+    },
+    nian: {
+        title: "念奴嬌 · 赤壁懷古", author: "蘇軾",
+        paragraphs: [
+            "大江東去，浪淘盡、千古風流人物。故壘西邊，人道是、三國周郎赤壁。亂石穿空，驚濤拍岸，捲起千堆雪。江山如畫，一時多少豪傑！",
+            "遙想公瑾當年，小喬初嫁了，雄姿英發。羽扇綸巾，談笑間、檣櫓灰飛煙滅。故國神遊，多情應笑我，早生華髮。人間如夢，一尊還酹江月。"
+        ]
+    },
+    sheng: {
+        title: "聲聲慢 · 秋情", author: "李清照",
+        paragraphs: [
+            "尋尋覓覓，冷冷清清，悽悽慘慘戚戚。乍煖還寒時候，最難將息。三杯兩盞淡酒，怎敵他晚來風急！雁過也，正傷心，卻是舊時相識。",
+            "滿地黃花堆積。憔悴損，如今有誰堪摘？守著窗兒，獨自怎生得黑！梧桐更兼細雨，到黃昏、點點滴滴。這次第，怎一箇愁字了得！"
+        ]
+    }
+};
+
+// ============================================================
+// 2. 狀態與工具
+// ============================================================
+const STORAGE_KEY = 'dse_songci_state_v5';
+
+let state = {
+    poemKey: 'all',
+    paraMode: 0,
+    mode: 'char', // 'char' | 'sent'
+    viewReview: false,
+    shuffleMode: false,
+    
+    allSents: [], 
+    allChars: [],
+    
+    ptrSent: 0, 
+    ptrChar: 0,
+    
+    flags: { char: {}, sent: {} },
+    
+    startTime: Date.now(),
+    history: [],
+};
+
+const $ = id => document.getElementById(id);
+const poemSelect = $('poemSelect');
+const paraSelect = $('paraSelect');
+const shuffleBtn = $('shuffleBtn');
+const statsBtn = $('statsBtn');
+const statsPanel = $('statsPanel');
+const currentPoemName = $('currentPoemName');
+const modeCharBtn = $('modeChar');
+const modeSentBtn = $('modeSent');
+const viewNormalBtn = $('viewNormal');
+const viewReviewBtn = $('viewReview');
+const textContainer = $('textContainer');
+const scrollArea = $('scrollArea');
+const progressBar = $('progressBar');
+const nextBtn = $('nextBtn');
+const prevBtn = $('prevBtn');
+const forgotBtn = $('forgotBtn');
+const lastWrongBtn = $('lastWrongBtn');
+const resetBtn = $('resetBtn');
+
+const statForgotPct = $('statForgotPct');
+const statForgotSub = $('statForgotSub');
+const statTime = $('statTime');
+const statSpeed = $('statSpeed');
+const historyChart = $('historyChart');
+
+function splitSentences(text) {
+    const regex = /[^，。！？；：、\s]+[，。！？；：、]*/g;
+    return (text.match(regex) || [text]).map(s => s.trim()).filter(s => s.length > 0);
+}
+
+function isMarkableChar(ch) {
+    if (!ch) return false;
+    return !/[，。！？；：、\s「」『』（）《》〈〉…—·,\.!\?;:'"()\[\]{}]/.test(ch);
+}
+
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+// ============================================================
+// 3. 儲存與載入
+// ============================================================
+function saveState() {
+    const data = {
+        poemKey: state.poemKey,
+        paraMode: state.paraMode,
+        mode: state.mode,
+        viewReview: state.viewReview,
+        shuffleMode: state.shuffleMode,
+        ptrSent: state.ptrSent,
+        ptrChar: state.ptrChar,
+        flags: state.flags,
+        startTime: state.startTime,
+        history: state.history
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            state.poemKey = data.poemKey || 'all';
+            state.paraMode = data.paraMode || 0;
+            state.mode = data.mode || 'char';
+            state.viewReview = data.viewReview || false;
+            state.shuffleMode = data.shuffleMode || false;
+            state.ptrSent = data.ptrSent || 0;
+            state.ptrChar = data.ptrChar || 0;
+            state.flags = data.flags || { char: {}, sent: {} };
+            state.startTime = data.startTime || Date.now();
+            state.history = data.history || [];
+        }
+    } catch (e) { console.error(e); }
+}
+
+// ============================================================
+// 4. 建立數據
+// ============================================================
+function buildData() {
+    const keys = state.poemKey === 'all' ? ['qing', 'nian', 'sheng'] : [state.poemKey];
+    let sents = [];
+    let chars = [];
+    let globalIndex = 0;
+
+    for (const key of keys) {
+        const p = POEMS[key];
+        let paraIndices = state.paraMode === 0 ? [0, 1] : [state.paraMode - 1];
+        
+        for (const pi of paraIndices) {
+            const pText = p.paragraphs[pi];
+            const rawSents = splitSentences(pText);
+            
+            rawSents.forEach((st, si) => {
+                const sentObj = {
+                    text: st,
+                    poemKey: key,
+                    paraIndex: pi,
+                    sentIndex: si,
+                    globalIndex: globalIndex++,
+                    chars: []
+                };
+                
+                Array.from(st).forEach((ch, ci) => {
+                    const charObj = {
+                        char: ch,
+                        poemKey: key,
+                        paraIndex: pi,
+                        sentIndex: si,
+                        charIndex: ci,
+                        globalIndex: sentObj.globalIndex,
+                        isMarkable: isMarkableChar(ch)
+                    };
+                    sentObj.chars.push(charObj);
+                    chars.push(charObj);
+                });
+                
+                sents.push(sentObj);
+            });
+        }
+    }
+
+    if (state.shuffleMode) {
+        const flaggedSents = sents.filter(s => {
+            const sKey = `${s.poemKey}:${s.paraIndex}:${s.sentIndex}`;
+            return state.flags.sent[sKey] || s.chars.some(c => state.flags.char[`${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`]);
+        });
+        const normalSents = sents.filter(s => !flaggedSents.includes(s));
+        sents = [...shuffleArray(flaggedSents), ...shuffleArray(normalSents)];
+    }
+
+    chars = [];
+    sents.forEach(s => {
+        s.chars.forEach(c => chars.push(c));
+    });
+
+    state.allSents = sents;
+    state.allChars = chars;
+}
+
+// ============================================================
+// 5. 核心渲染與統計
+// ============================================================
+
+/** 更新頂部目前詞牌提示 */
+function updateCurrentPoem() {
+    let targetItem = null;
+    if (state.mode === 'char') {
+        if (state.ptrChar < state.allChars.length) targetItem = state.allChars[state.ptrChar];
+        else if (state.allChars.length > 0) targetItem = state.allChars[state.allChars.length - 1];
+    } else {
+        if (state.ptrSent < state.allSents.length) targetItem = state.allSents[state.ptrSent];
+        else if (state.allSents.length > 0) targetItem = state.allSents[state.allSents.length - 1];
+    }
+
+    if (targetItem) {
+        const p = POEMS[targetItem.poemKey];
+        if (state.mode === 'char' && state.ptrChar >= state.allChars.length) {
+            currentPoemName.textContent = `已完成 (${p.title})`;
+        } else if (state.mode === 'sent' && state.ptrSent >= state.allSents.length) {
+            currentPoemName.textContent = `已完成 (${p.title})`;
+        } else {
+            currentPoemName.textContent = `${p.title} · ${p.author}`;
+        }
+    } else {
+        currentPoemName.textContent = '準備開始';
+    }
+}
+
+function updateStats() {
+    let totalMarkable = 0;
+    let flaggedCount = 0;
+    state.allChars.forEach(c => {
+        if (c.isMarkable) {
+            totalMarkable++;
+            const cKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`;
+            const sKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}`;
+            if (state.flags.char[cKey] || state.flags.sent[sKey]) {
+                flaggedCount++;
+            }
+        }
+    });
+    const pct = totalMarkable > 0 ? Math.round((flaggedCount / totalMarkable) * 100) : 0;
+    statForgotPct.textContent = pct + '%';
+    statForgotSub.textContent = `${flaggedCount} / ${totalMarkable} 字`;
+
+    const elapsed = Date.now() - state.startTime;
+    statTime.textContent = formatTime(elapsed);
+    
+    const currentCount = state.mode === 'char' ? state.ptrChar : state.ptrSent;
+    const elapsedMins = elapsed / 60000;
+    let speed = 0;
+    if (elapsedMins > 0.1) {
+        if (state.mode === 'char') {
+            speed = Math.round(currentCount / elapsedMins);
+        } else {
+            let charCount = 0;
+            for (let i = 0; i < state.ptrSent; i++) charCount += state.allSents[i].chars.length;
+            speed = Math.round(charCount / elapsedMins);
+        }
+    }
+    statSpeed.textContent = `${speed} 字/分鐘`;
+    renderChart();
+}
+
+function renderChart() {
+    historyChart.innerHTML = '';
+    if (state.history.length === 0) {
+        historyChart.innerHTML = '<div style="color:var(--text2);font-size:11px;width:100%;text-align:center;padding-top:20px;">暫無記錄，完成一輪後會顯示</div>';
+        return;
+    }
+    const maxSpeed = Math.max(...state.history.map(h => h.speed), 10);
+    state.history.slice(-10).forEach((h) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bar-wrapper';
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = `${(h.speed / maxSpeed) * 100}%`;
+        bar.title = `第 ${h.round} 輪: ${h.speed} 字/分 (${formatTime(h.timeSpent)})`;
+        
+        const valLabel = document.createElement('div');
+        valLabel.className = 'bar-val';
+        valLabel.textContent = h.speed;
+        bar.appendChild(valLabel);
+
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = `R${h.round}`;
+
+        wrapper.appendChild(bar);
+        wrapper.appendChild(label);
+        historyChart.appendChild(wrapper);
+    });
+}
+
+function render() {
+    textContainer.innerHTML = '';
+    
+    const total = state.mode === 'char' ? state.allChars.length : state.allSents.length;
+    const current = state.mode === 'char' ? state.ptrChar : state.ptrSent;
+    const pct = total > 0 ? (current / total) * 100 : 0;
+    progressBar.style.width = pct + '%';
+
+    if (total === 0) {
+        textContainer.innerHTML = '<div style="color:var(--text2);text-align:center;padding:40px 0;">冇符合條件嘅內容</div>';
+        return;
+    }
+
+    updateCurrentPoem();
+
+    if (state.mode === 'char') {
+        renderCharMode();
+    } else {
+        renderSentMode();
+    }
+    
+    setTimeout(() => {
+        scrollArea.scrollTop = scrollArea.scrollHeight;
+    }, 10);
+
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current >= total;
+    forgotBtn.disabled = current >= total;
+    lastWrongBtn.disabled = current === 0;
+
+    updateStats();
+    saveState();
+}
+
+function renderCharMode() {
+    const grouped = {};
+    for (let i = 0; i < state.ptrChar; i++) {
+        const c = state.allChars[i];
+        const sKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}`;
+        if (!grouped[sKey]) grouped[sKey] = [];
+        grouped[sKey].push(c);
+    }
+
+    let lastPoemKey = null;
+    let lastParaKey = null;
+    
+    state.allSents.forEach(s => {
+        const sKey = `${s.poemKey}:${s.paraIndex}:${s.sentIndex}`;
+        if (!grouped[sKey]) return;
+
+        // 插入詞牌標題
+        if (lastPoemKey !== s.poemKey) {
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'inline-poem-title';
+            titleDiv.innerHTML = `${POEMS[s.poemKey].title} <span>${POEMS[s.poemKey].author}</span>`;
+            textContainer.appendChild(titleDiv);
+            lastPoemKey = s.poemKey;
+            lastParaKey = null; // 換詞重設段落標記
+        }
+
+        const paraKey = `${s.poemKey}:${s.paraIndex}`;
+        if (lastParaKey && lastParaKey !== paraKey) {
+            const spacer = document.createElement('span');
+            spacer.className = 'para-spacer';
+            textContainer.appendChild(spacer);
+        }
+        lastParaKey = paraKey;
+
+        grouped[sKey].forEach(c => {
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = c.char;
+            
+            const cKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`;
+            const sKeyFull = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}`;
+            const isFlagged = state.flags.char[cKey] || state.flags.sent[sKeyFull];
+            
+            if (isFlagged) {
+                span.classList.add('flagged');
+            } else if (state.viewReview) {
+                span.classList.add('dimmed');
+            }
+
+            if (c.isMarkable) {
+                span.onclick = () => toggleCharFlag(cKey, sKeyFull);
+            }
+            textContainer.appendChild(span);
+        });
+    });
+
+    if (state.ptrChar < state.allChars.length) {
+        const marker = document.createElement('span');
+        marker.className = 'target-marker';
+        textContainer.appendChild(marker);
+    }
+}
+
+function renderSentMode() {
+    let lastPoemKey = null;
+    let lastParaKey = null;
+
+    for (let i = 0; i < state.ptrSent; i++) {
+        const s = state.allSents[i];
+        const sKey = `${s.poemKey}:${s.paraIndex}:${s.sentIndex}`;
+        
+        if (lastPoemKey !== s.poemKey) {
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'inline-poem-title';
+            titleDiv.innerHTML = `${POEMS[s.poemKey].title} <span>${POEMS[s.poemKey].author}</span>`;
+            textContainer.appendChild(titleDiv);
+            lastPoemKey = s.poemKey;
+            lastParaKey = null;
+        }
+
+        const paraKey = `${s.poemKey}:${s.paraIndex}`;
+        if (lastParaKey && lastParaKey !== paraKey) {
+            const spacer = document.createElement('span');
+            spacer.className = 'para-spacer';
+            textContainer.appendChild(spacer);
+        }
+        lastParaKey = paraKey;
+
+        const span = document.createElement('span');
+        span.className = 'sent';
+        span.textContent = s.text;
+        
+        const isFlagged = state.flags.sent[sKey] || s.chars.some(c => state.flags.char[`${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`]);
+        
+        if (isFlagged) {
+            span.classList.add('flagged');
+        } else if (state.viewReview) {
+            span.classList.add('dimmed');
+        }
+        
+        span.onclick = () => toggleSentFlag(sKey, s);
+        textContainer.appendChild(span);
+    }
+
+    // 如果下一個目標係新詞，提早顯示標題
+    if (state.ptrSent < state.allSents.length) {
+        const nextS = state.allSents[state.ptrSent];
+        if (lastPoemKey !== nextS.poemKey) {
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'inline-poem-title';
+            titleDiv.innerHTML = `${POEMS[nextS.poemKey].title} <span>${POEMS[nextS.poemKey].author}</span>`;
+            textContainer.appendChild(titleDiv);
+        }
+
+        const targetDiv = document.createElement('span');
+        targetDiv.className = 'sent target';
+        targetDiv.innerHTML = '<span style="color:var(--accent); font-weight:bold; opacity:0.8;">[ 按下一句顯示 ]</span>';
+        textContainer.appendChild(targetDiv);
+    }
+}
+
+// ============================================================
+// 6. 標記操作
+// ============================================================
+function toggleCharFlag(cKey, sKey) {
+    if (state.flags.char[cKey]) {
+        delete state.flags.char[cKey];
+    } else {
+        state.flags.char[cKey] = true;
+        state.flags.sent[sKey] = true;
+    }
+    saveState();
+    render();
+}
+
+function toggleSentFlag(sKey, sentObj) {
+    if (state.flags.sent[sKey]) {
+        delete state.flags.sent[sKey];
+        sentObj.chars.forEach(c => {
+            delete state.flags.char[`${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`];
+        });
+    } else {
+        state.flags.sent[sKey] = true;
+    }
+    saveState();
+    render();
+}
+
+function syncPointers(targetMode) {
+    if (targetMode === 'char' && state.mode === 'sent') {
+        if (state.ptrSent >= state.allSents.length) {
+            state.ptrChar = state.allChars.length;
+        } else {
+            const nextSent = state.allSents[state.ptrSent];
+            const charIndex = state.allChars.findIndex(c => 
+                c.poemKey === nextSent.poemKey && c.paraIndex === nextSent.paraIndex && 
+                c.sentIndex === nextSent.sentIndex && c.charIndex === 0
+            );
+            state.ptrChar = charIndex !== -1 ? charIndex : state.allChars.length;
+        }
+    } else if (targetMode === 'sent' && state.mode === 'char') {
+        if (state.ptrChar >= state.allChars.length) {
+            state.ptrSent = state.allSents.length;
+        } else {
+            const currentChar = state.allChars[state.ptrChar];
+            const sentIndex = state.allSents.findIndex(s => 
+                s.poemKey === currentChar.poemKey && s.paraIndex === currentChar.paraIndex && 
+                s.sentIndex === currentChar.sentIndex
+            );
+            state.ptrSent = sentIndex !== -1 ? sentIndex : state.allSents.length;
+        }
+    }
+    state.mode = targetMode;
+    render();
+}
+
+// ============================================================
+// 7. 按鈕事件
+// ============================================================
+
+nextBtn.onclick = () => {
+    if (state.mode === 'char' && state.ptrChar < state.allChars.length) {
+        state.ptrChar++;
+        render();
+    } else if (state.mode === 'sent' && state.ptrSent < state.allSents.length) {
+        state.ptrSent++;
+        render();
+    }
+};
+
+forgotBtn.onclick = () => {
+    if (state.mode === 'char' && state.ptrChar < state.allChars.length) {
+        const c = state.allChars[state.ptrChar];
+        const cKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`;
+        const sKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}`;
+        state.flags.char[cKey] = true;
+        state.flags.sent[sKey] = true;
+        state.ptrChar++;
+        saveState();
+        render();
+    } else if (state.mode === 'sent' && state.ptrSent < state.allSents.length) {
+        const s = state.allSents[state.ptrSent];
+        const sKey = `${s.poemKey}:${s.paraIndex}:${s.sentIndex}`;
+        state.flags.sent[sKey] = true;
+        state.ptrSent++;
+        saveState();
+        render();
+    }
+};
+
+lastWrongBtn.onclick = () => {
+    if (state.mode === 'char') {
+        if (state.ptrChar > 0) {
+            state.ptrChar--;
+            const c = state.allChars[state.ptrChar];
+            const cKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}:${c.charIndex}`;
+            const sKey = `${c.poemKey}:${c.paraIndex}:${c.sentIndex}`;
+            state.flags.char[cKey] = true;
+            state.flags.sent[sKey] = true;
+            state.ptrChar++;
+            saveState();
+            render();
+        }
+    } else {
+        if (state.ptrSent > 0) {
+            state.ptrSent--;
+            const s = state.allSents[state.ptrSent];
+            const sKey = `${s.poemKey}:${s.paraIndex}:${s.sentIndex}`;
+            state.flags.sent[sKey] = true;
+            state.ptrSent++;
+            saveState();
+            render();
+        }
+    }
+};
+
+prevBtn.onclick = () => {
+    if (state.mode === 'char' && state.ptrChar > 0) {
+        state.ptrChar--;
+        render();
+    } else if (state.mode === 'sent' && state.ptrSent > 0) {
+        state.ptrSent--;
+        render();
+    }
+};
+
+resetBtn.onclick = () => {
+    const elapsed = Date.now() - state.startTime;
+    const elapsedMins = elapsed / 60000;
+    let speed = 0;
+    if (elapsedMins > 0.1) {
+        let charCount = 0;
+        if (state.mode === 'char') charCount = state.ptrChar;
+        else for (let i = 0; i < state.ptrSent; i++) charCount += state.allSents[i].chars.length;
+        speed = Math.round(charCount / elapsedMins);
+    }
+
+    const current = state.mode === 'char' ? state.ptrChar : state.ptrSent;
+    const total = state.mode === 'char' ? state.allChars.length : state.allSents.length;
+    if (current > total * 0.1 && elapsed > 10000) {
+        state.history.push({
+            round: state.history.length + 1,
+            date: Date.now(),
+            timeSpent: elapsed,
+            charsDone: current,
+            speed: speed
+        });
+    }
+
+    state.ptrChar = 0;
+    state.ptrSent = 0;
+    state.startTime = Date.now();
+    
+    buildData(); 
+    render();
+};
+
+poemSelect.onchange = (e) => {
+    state.poemKey = e.target.value;
+    buildData();
+    resetBtn.onclick();
+};
+
+paraSelect.onchange = (e) => {
+    state.paraMode = parseInt(e.target.value);
+    buildData();
+    resetBtn.onclick();
+};
+
+shuffleBtn.onclick = () => {
+    state.shuffleMode = shuffleBtn.classList.toggle('active');
+    buildData();
+    resetBtn.onclick();
+};
+
+modeCharBtn.onclick = () => {
+    if (state.mode === 'char') return;
+    modeCharBtn.classList.add('active');
+    modeSentBtn.classList.remove('active');
+    syncPointers('char');
+};
+
+modeSentBtn.onclick = () => {
+    if (state.mode === 'sent') return;
+    modeSentBtn.classList.add('active');
+    modeCharBtn.classList.remove('active');
+    syncPointers('sent');
+};
+
+viewNormalBtn.onclick = () => {
+    if (!state.viewReview) return;
+    state.viewReview = false;
+    viewNormalBtn.classList.add('active');
+    viewReviewBtn.classList.remove('active');
+    render();
+};
+
+viewReviewBtn.onclick = () => {
+    if (state.viewReview) return;
+    state.viewReview = true;
+    viewReviewBtn.classList.add('active');
+    viewNormalBtn.classList.remove('active');
+    render();
+};
+
+statsBtn.onclick = () => {
+    statsPanel.classList.toggle('show');
+};
+
+// ============================================================
+// 8. 初始化
+// ============================================================
+function init() {
+    loadState();
+    
+    poemSelect.value = state.poemKey;
+    paraSelect.value = state.paraMode;
+    
+    if (state.mode === 'char') {
+        modeCharBtn.classList.add('active');
+        modeSentBtn.classList.remove('active');
+    } else {
+        modeSentBtn.classList.add('active');
+        modeCharBtn.classList.remove('active');
+    }
+    
+    if (state.viewReview) {
+        viewReviewBtn.classList.add('active');
+        viewNormalBtn.classList.remove('active');
+    }
+    
+    if (state.shuffleMode) {
+        shuffleBtn.classList.add('active');
+    }
+
+    buildData();
+    
+    if (state.ptrChar > state.allChars.length) state.ptrChar = 0;
+    if (state.ptrSent > state.allSents.length) state.ptrSent = 0;
+    
+    render();
+    
+    setInterval(() => {
+        if (statsPanel.classList.contains('show')) {
+            updateStats();
+        }
+    }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
